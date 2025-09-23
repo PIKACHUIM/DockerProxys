@@ -99,6 +99,6 @@ app.all('/token', async c => {
 })
 
 /* 3. 其余路径 404 */
-app.all('*', c => c.notFound())
+// app.all('*', c => c.notFound())
 
 export default app
