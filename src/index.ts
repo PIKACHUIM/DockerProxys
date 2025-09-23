@@ -1,5 +1,5 @@
 // src/index.ts
-import { Hono } from 'hono'
+import {Hono} from 'hono'
 
 const app = new Hono()
 
@@ -7,8 +7,10 @@ const UPSTREAM = 'https://registry-1.docker.io'
 
 app.all('/*', async c => {
     // 1. 拼装目标 URL
-    const url = new URL(c.req.path + c.req.query, UPSTREAM)
-
+    const url = new URL(
+        c.req.path + (new URL(c.req.url).search || ''),
+        UPSTREAM
+    )
     // 2. 构造新请求头
     const headers = new Headers(c.req.header())
     headers.set('Host', 'registry-1.docker.io')        // 对应 nginx 的 proxy_set_header Host
