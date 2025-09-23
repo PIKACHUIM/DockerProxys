@@ -59,7 +59,7 @@ function buildHeaders(c: any, host: string): Headers {
 /* ---------- 路由 ---------- */
 
 /* 1. /v2/* 镜像仓库反代 */
-app.all('/v2/*', async c => {
+app.use('/v2/*', async c => {
     const url = new URL(c.req.path + (new URL(c.req.url).search || ''), REGISTRY_UPSTREAM)
     const headers = buildHeaders(c, 'registry-1.docker.io')
 
@@ -85,7 +85,7 @@ app.all('/v2/*', async c => {
 })
 
 /* 2. /token 认证服务器反代 */
-app.all('/token', async c => {
+app.use('/token', async c => {
     const url = new URL('/token' + (new URL(c.req.url).search || ''), AUTH_UPSTREAM)
     const headers = buildHeaders(c, 'auth.docker.io')
 
