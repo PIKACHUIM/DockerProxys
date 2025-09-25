@@ -5,7 +5,27 @@
 2. 支持自动替换返回的auth链接，改为本站URL
 3. 支持Cloudflare、EdgeOne Pages等平台部署
 
-示例站点：根据相关部门规定,不提供示例站点
+示例站点：根据相关部门规定 不提供示例站点
+
+项目地址：[PIKACHUIM/DockerProxys](https://github.com/PIKACHUIM/DockerProxys)
+
+## 快速部署
+
+### 一键部署
+|                   Cloudflare Worker 全球站                   |                                                                                                                                 EdgeOsne Functions 国际站                                                                                                                                 |                   EdgeOne Functions 中国站                   |
+| :----------------------------------------------------------: |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:| :----------------------------------------------------------: |
+| [<img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" style="width:400px;heigh:200px" />](https://deploy.workers.cloudflare.com/?url=https://github.com/PIKACHUIM/DockerProxys) | [<img src="https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg" alt="使用 EdgeOne Pages 部署" style="width:400px;heigh:200px" />](https://edgeone.ai/pages/new?project-name=oplist-api&repository-url=https://github.com/PIKACHUIM/DockerProxys&build-command=npm%20run%20build-eo&install-command=npm%20install&output-directory=public&root-directory=./) | [<img src="https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg" alt="使用 EdgeOne Pages 部署" style="width:400px;heigh:200px" />](https://console.cloud.tencent.com/edgeone/pages/new?project-name=oplist-api&repository-url=https://github.com/PIKACHUIM/DockerProxys&build-command=npm%20run%20build-eo&install-command=npm%20install&output-directory=public&root-directory=./) |
+
+### 修改变量
+
+部署完成后，请登录后台，按一下表格新增/修改变量
+
+| 变量名称 | 类型   | 示例                | 说明                                                      |
+| -------- | ------ | ------------------- | --------------------------------------------------------- |
+| `DOMAIN` | `TEXT` | `proxy.example.com` | 代理网站的域名，不包含协议(`https://`)，因为必须是`https` |
+
+
+
 
 ## 使用方法
 ### 临时拉取镜像
