@@ -5,7 +5,7 @@
 2. 支持自动替换返回的auth链接，改为本站URL
 3. 支持Cloudflare、EdgeOne Pages等平台部署
 
-示例站点：根据相关部门规定，不提供示例站点
+示例站点：根据相关部门规定,不提供示例站点
 
 ## 使用方法
 ### 临时拉取镜像
@@ -37,6 +37,15 @@ systemctl restart docker
 
 ## 测试方法
 
+### 拉取仓库
+
+```shell
+git clone https://github.com/PIKACHUIM/DockerProxys.git
+cd DockerProxys
+```
+
+### 测试代码
+
 ```shell
 # 测试Cloudflare
 npm i && npm run dev
@@ -46,10 +55,18 @@ npm i && npm run dev-eo
 ```
 
 ## 部署方法
+### 拉取仓库
+
+```shell
+git clone https://github.com/PIKACHUIM/DockerProxys.git
+cd DockerProxys
+```
+
+### 部署代码
 ```shell
 # 部署Cloudflare
 npm i && npm run deploy
 
 # 部署到EdgeOne Pages
-npm i &&  npm run deploy-eo
+npm i && npm run deploy-eo
 ```
