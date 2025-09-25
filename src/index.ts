@@ -1,7 +1,7 @@
 // src/index.ts
 import { Hono } from 'hono'
 
-const app = new Hono()
+export const app = new Hono()
 
 /* ---------- 常量 ---------- */
 const REGISTRY_UPSTREAM = 'https://registry-1.docker.io'
