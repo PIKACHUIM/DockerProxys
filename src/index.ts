@@ -98,7 +98,7 @@ app.use('/token', async c => {
     return cloneUpstream(resp, c)
 })
 
-/* 3. 其余路径 404 */
-// app.all('*', c => c.notFound())
+// /* 3. 其余路径 404 */
+app.all('*', c => c.notFound())
 
 export default app
