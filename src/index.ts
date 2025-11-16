@@ -9,11 +9,6 @@ function selfHost(c: any): string {
     return `https://${c.env.DOMAIN}`   // wrangler.toml 里 [vars] DOMAIN = "docker.example.com"
 }
 
-/* 工具：拼自己的域名 */
-function destHost(c: any): string {
-    return `https://${c.env.DOMAIN}`   // wrangler.toml 里 [vars] DOMAIN = "docker.example.com"
-}
-
 /* 把上游响应搬回来，顺便改写 www-authenticate 等 */
 async function cloneUpstream(resp: Response, c: any): Promise<Response> {
     const h = new Headers(resp.headers)
@@ -106,4 +101,5 @@ app.use('/token', async c => {
 // /* 3. 其余路径 404 */
 app.all('*', c => c.notFound())
 
+// @ts-ignore
 export default app
