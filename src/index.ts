@@ -1,15 +1,16 @@
 // src/index.ts
-import { Hono } from 'hono'
+import {Hono} from 'hono'
 
 export const app = new Hono()
 
-/* ---------- 常量 ---------- */
-const REGISTRY_UPSTREAM =  c.env.PROXYS || 'https://registry-1.docker.io'
-const AUTH_UPSTREAM     =  c.env.LOGINS || 'https://auth.docker.io'
-/* -------------------------------- */
 
 /* 工具：拼自己的域名 */
 function selfHost(c: any): string {
+    return `https://${c.env.DOMAIN}`   // wrangler.toml 里 [vars] DOMAIN = "docker.example.com"
+}
+
+/* 工具：拼自己的域名 */
+function destHost(c: any): string {
     return `https://${c.env.DOMAIN}`   // wrangler.toml 里 [vars] DOMAIN = "docker.example.com"
 }
 
@@ -33,8 +34,8 @@ async function cloneUpstream(resp: Response, c: any): Promise<Response> {
     /* 3. 重写 30x Location */
     if (h.has('location')) {
         const loc = h.get('location')!
-        if (loc.startsWith(REGISTRY_UPSTREAM)) {
-            h.set('location', loc.replace(REGISTRY_UPSTREAM, selfHost(c)))
+        if (loc.startsWith(c.env.PROXYS || 'https://registry-1.docker.io')) {
+            h.set('location', loc.replace(c.env.PROXYS || 'https://registry-1.docker.io', selfHost(c)))
         }
     }
 
@@ -48,9 +49,9 @@ async function cloneUpstream(resp: Response, c: any): Promise<Response> {
 /* 构造通用头 */
 function buildHeaders(c: any, host: string): Headers {
     const h = new Headers()
-    c.req.raw.headers.forEach((v, k) => h.set(k, v))
+    c.req.raw.headers.forEach((v: string, k: string) => h.set(k, v))
     h.set('host', host)
-    h.set('x-real-ip',       c.req.header('cf-connecting-ip') ?? c.req.header('x-real-ip') ?? '')
+    h.set('x-real-ip', c.req.header('cf-connecting-ip') ?? c.req.header('x-real-ip') ?? '')
     h.set('x-forwarded-for', c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? '')
     h.set('x-forwarded-proto', 'https')
     return h
@@ -60,7 +61,9 @@ function buildHeaders(c: any, host: string): Headers {
 
 /* 1. /v2/* 镜像仓库反代 */
 app.use('/v2/*', async c => {
-    const url = new URL(c.req.path + (new URL(c.req.url).search || ''), REGISTRY_UPSTREAM)
+    const url = new URL(
+        c.req.path + (new URL(c.req.url).search || ''),
+        c.env.PROXYS || 'https://registry-1.docker.io')
     const headers = buildHeaders(c, 'registry-1.docker.io')
 
     let resp = await fetch(url, {
@@ -86,7 +89,10 @@ app.use('/v2/*', async c => {
 
 /* 2. /token 认证服务器反代 */
 app.use('/token', async c => {
-    const url = new URL('/token' + (new URL(c.req.url).search || ''), AUTH_UPSTREAM)
+    const url = new URL(
+        '/token' + (new URL(c.req.url).search || ''),
+        c.env.LOGINS || 'https://auth.docker.io'
+    )
     const headers = buildHeaders(c, 'auth.docker.io')
 
     const resp = await fetch(url, {
