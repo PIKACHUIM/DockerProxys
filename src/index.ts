@@ -4,8 +4,8 @@ import { Hono } from 'hono'
 export const app = new Hono()
 
 /* ---------- 常量 ---------- */
-const REGISTRY_UPSTREAM = 'https://registry-1.docker.io'
-const AUTH_UPSTREAM     = 'https://auth.docker.io'
+const REGISTRY_UPSTREAM =  c.env.PROXYS || 'https://registry-1.docker.io'
+const AUTH_UPSTREAM     =  c.env.LOGINS || 'https://auth.docker.io'
 /* -------------------------------- */
 
 /* 工具：拼自己的域名 */
