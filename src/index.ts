@@ -62,13 +62,13 @@ function buildHeaders(c: any, host: string): Headers {
 /* 1. /v2/* 镜像仓库反代 */
 app.use('/v2/*', async c => {
     const url = new URL(
-        c.req.path + (new URL(c.req.url).search || ''),
+        c.req.path + (new URL(c.req.url).search || ''), // @ts-ignore
         c.env.PROXYS || 'https://registry-1.docker.io')
     const headers = buildHeaders(c, 'registry-1.docker.io')
 
     let resp = await fetch(url, {
         method: c.req.method,
-        headers,
+        headers, // @ts-ignore
         body: c.req.body
     })
 
@@ -78,7 +78,7 @@ app.use('/v2/*', async c => {
         if (loc) {
             resp = await fetch(loc, {
                 method: c.req.method,
-                headers,
+                headers,// @ts-ignore
                 body: c.req.body
             })
         }
@@ -90,14 +90,13 @@ app.use('/v2/*', async c => {
 /* 2. /token 认证服务器反代 */
 app.use('/token', async c => {
     const url = new URL(
-        '/token' + (new URL(c.req.url).search || ''),
+        '/token' + (new URL(c.req.url).search || ''), // @ts-ignore
         c.env.LOGINS || 'https://auth.docker.io'
     )
     const headers = buildHeaders(c, 'auth.docker.io')
-
     const resp = await fetch(url, {
         method: c.req.method,
-        headers,
+        headers,// @ts-ignore
         body: c.req.body
     })
 
