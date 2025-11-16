@@ -56,10 +56,11 @@ function buildHeaders(c: any, host: string): Headers {
 
 /* 1. /v2/* 镜像仓库反代 */
 app.use('/v2/*', async c => {
+    const upstreamHost = c.req.header('host')?.includes('ghcr.io') ? 'ghcr.io' : 'registry-1.docker.io';
     const url = new URL(
         c.req.path + (new URL(c.req.url).search || ''), // @ts-ignore
-        c.env.PROXYS || 'https://registry-1.docker.io')
-    const headers = buildHeaders(c, 'registry-1.docker.io')
+        c.env.PROXYS || `https://${upstreamHost}`)
+    const headers = buildHeaders(c, upstreamHost)
 
     let resp = await fetch(url, {
         method: c.req.method,
@@ -84,11 +85,12 @@ app.use('/v2/*', async c => {
 
 /* 2. /token 认证服务器反代 */
 app.use('/token', async c => {
+    const upstreamHost = c.req.header('host')?.includes('ghcr.io') ? 'ghcr.io' : 'auth.docker.io';
     const url = new URL(
         '/token' + (new URL(c.req.url).search || ''), // @ts-ignore
-        c.env.LOGINS || 'https://auth.docker.io'
+        c.env.LOGINS || `https://${upstreamHost}`
     )
-    const headers = buildHeaders(c, 'auth.docker.io')
+    const headers = buildHeaders(c, upstreamHost)
     const resp = await fetch(url, {
         method: c.req.method,
         headers,// @ts-ignore
