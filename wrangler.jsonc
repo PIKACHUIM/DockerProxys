@@ -8,6 +8,7 @@
    ],
    "vars": {
      "DOMAIN": "<YOUR-DOMAIN>",
-     "PROXYS": "<HOST-TARGET>",
+     "PROXYS": "https://registry-1.docker.io",
+     "LOGINS": "https://auth.docker.io"
    }
 }
