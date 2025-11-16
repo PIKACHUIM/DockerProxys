@@ -1,12 +1,11 @@
 // src/index.ts
 import {Hono} from 'hono'
-
 export const app = new Hono()
 
 
 /* 工具：拼自己的域名 */
 function selfHost(c: any): string {
-    return `https://${c.env.DOMAIN}`   // wrangler.toml 里 [vars] DOMAIN = "docker.example.com"
+    return `https://${c.env.DOMAIN}`
 }
 
 /* 把上游响应搬回来，顺便改写 www-authenticate 等 */
@@ -22,7 +21,7 @@ async function cloneUpstream(resp: Response, c: any): Promise<Response> {
         h.delete('www-authenticate')
         const newAuth = rawWwwAuth
             .replace(/realm="[^"]*"/, `realm="${selfHost(c)}/token"`)
-            .replace(/service="[^"]*"/, `service="registry.docker.io"`)
+            .replace(/service="[^"]*"/, `service="${upstreamHost}"`)
         h.set('www-authenticate', newAuth)
     }
 
@@ -56,10 +55,10 @@ function buildHeaders(c: any, host: string): Headers {
 
 /* 1. /v2/* 镜像仓库反代 */
 app.use('/v2/*', async c => {
-    const upstreamHost = c.req.header('host')?.includes('ghcr.io') ? 'ghcr.io' : 'registry-1.docker.io';
-    const url = new URL(
-        c.req.path + (new URL(c.req.url).search || ''), // @ts-ignore
-        c.env.PROXYS || `https://${upstreamHost}`)
+    const upstreamUrl = c.env.PROXYS || 'https://registry-1.docker.io';
+    const upstreamHost = new URL(upstreamUrl).hostname;
+    const path = c.req.path.startsWith('/v2/') ? c.req.path : `/v2${c.req.path}`;
+    const url = new URL(path + (new URL(c.req.url).search || ''), upstreamUrl)
     const headers = buildHeaders(c, upstreamHost)
 
     let resp = await fetch(url, {
@@ -85,11 +84,9 @@ app.use('/v2/*', async c => {
 
 /* 2. /token 认证服务器反代 */
 app.use('/token', async c => {
-    const upstreamHost = c.req.header('host')?.includes('ghcr.io') ? 'ghcr.io' : 'auth.docker.io';
-    const url = new URL(
-        '/token' + (new URL(c.req.url).search || ''), // @ts-ignore
-        c.env.LOGINS || `https://${upstreamHost}`
-    )
+    const upstreamUrl = c.env.LOGINS;
+    const upstreamHost = new URL(upstreamUrl).hostname;
+    const url = new URL('/token' + (new URL(c.req.url).search || ''), upstreamUrl)
     const headers = buildHeaders(c, upstreamHost)
     const resp = await fetch(url, {
         method: c.req.method,
