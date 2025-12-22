@@ -3,13 +3,13 @@ import { cors } from 'hono/cors';
 
 // 类型定义
 type Bindings = {
-    UA?: string;
-    URL?: string;
-    URL302?: string;
+	UA?: string;
+	URL?: string;
+	URL302?: string;
 };
 
 type Variables = {
-    hub_host: string;
+	hub_host: string;
 };
 
 // Docker镜像仓库主机地址
@@ -22,44 +22,44 @@ let 屏蔽爬虫UA = ['netcraft'];
 
 // 根据主机名选择对应的上游地址
 function routeByHosts(host: string): [string, boolean] {
-    const routes: Record<string, string> = {
-        "quay": "quay.io",
-        "gcr": "gcr.io",
-        "k8s-gcr": "k8s.gcr.io",
-        "k8s": "registry.k8s.io",
-        "ghcr": "ghcr.io",
-        "cloudsmith": "docker.cloudsmith.io",
-        "nvcr": "nvcr.io",
-        "test": "registry-1.docker.io",
-    };
+	const routes: Record<string, string> = {
+		"quay": "quay.io",
+		"gcr": "gcr.io",
+		"k8s-gcr": "k8s.gcr.io",
+		"k8s": "registry.k8s.io",
+		"ghcr": "ghcr.io",
+		"cloudsmith": "docker.cloudsmith.io",
+		"nvcr": "nvcr.io",
+		"test": "registry-1.docker.io",
+	};
 
-    if (host in routes) {
-        return [routes[host], false];
-    } else {
-        return [hub_host, true];
-    }
+	if (host in routes) {
+		return [routes[host], false];
+	} else {
+		return [hub_host, true];
+	}
 }
 
 // 构造响应
 function makeRes(body: any, status = 200, headers: Record<string, string> = {}) {
-    headers['access-control-allow-origin'] = '*';
-    return new Response(body, { status, headers });
+	headers['access-control-allow-origin'] = '*';
+	return new Response(body, { status, headers });
 }
 
 // 构造新的URL对象
 function newUrl(urlStr: string, base: string): URL | null {
-    try {
-        console.log(`Constructing new URL object with path ${urlStr} and base ${base}`);
-        return new URL(urlStr, base);
-    } catch (err) {
-        console.error(err);
-        return null;
-    }
+	try {
+		console.log(`Constructing new URL object with path ${urlStr} and base ${base}`);
+		return new URL(urlStr, base);
+	} catch (err) {
+		console.error(err);
+		return null;
+	}
 }
 
 // Nginx 伪装页面
 async function nginx() {
-    const text = `
+	const text = `
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -86,12 +86,12 @@ async function nginx() {
 	</body>
 	</html>
 	`;
-    return text;
+	return text;
 }
 
 // 搜索界面
 async function searchInterface() {
-    const html = `
+	const html = `
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -403,57 +403,57 @@ async function searchInterface() {
 	</body>
 	</html>
 	`;
-    return html;
+	return html;
 }
 
 // 处理HTTP请求
 async function httpHandler(req: Request, pathname: string, baseHost: string) {
-    const reqHdrRaw = req.headers;
-    const reqHdrNew = new Headers(reqHdrRaw);
-    reqHdrNew.delete("Authorization");
+	const reqHdrRaw = req.headers;
+	const reqHdrNew = new Headers(reqHdrRaw);
+	reqHdrNew.delete("Authorization");
 
-    const urlObj = newUrl(pathname, 'https://' + baseHost);
-    if (!urlObj) {
-        return makeRes('Invalid URL', 400);
-    }
+	const urlObj = newUrl(pathname, 'https://' + baseHost);
+	if (!urlObj) {
+		return makeRes('Invalid URL', 400);
+	}
 
-    const reqInit: RequestInit = {
-        method: req.method,
-        headers: reqHdrNew,
-        redirect: 'follow',
-        body: req.body
-    };
+	const reqInit: RequestInit = {
+		method: req.method,
+		headers: reqHdrNew,
+		redirect: 'follow',
+		body: req.body
+	};
 
-    return proxy(urlObj, reqInit);
+	return proxy(urlObj, reqInit);
 }
 
 // 代理请求
 async function proxy(urlObj: URL, reqInit: RequestInit) {
-    const res = await fetch(urlObj.href, reqInit);
-    const resHdrOld = res.headers;
-    const resHdrNew = new Headers(resHdrOld);
+	const res = await fetch(urlObj.href, reqInit);
+	const resHdrOld = res.headers;
+	const resHdrNew = new Headers(resHdrOld);
 
-    const status = res.status;
-    resHdrNew.set('access-control-expose-headers', '*');
-    resHdrNew.set('access-control-allow-origin', '*');
-    resHdrNew.set('Cache-Control', 'max-age=1500');
+	const status = res.status;
+	resHdrNew.set('access-control-expose-headers', '*');
+	resHdrNew.set('access-control-allow-origin', '*');
+	resHdrNew.set('Cache-Control', 'max-age=1500');
 
-    resHdrNew.delete('content-security-policy');
-    resHdrNew.delete('content-security-policy-report-only');
-    resHdrNew.delete('clear-site-data');
+	resHdrNew.delete('content-security-policy');
+	resHdrNew.delete('content-security-policy-report-only');
+	resHdrNew.delete('clear-site-data');
 
-    return new Response(res.body, {
-        status,
-        headers: resHdrNew
-    });
+	return new Response(res.body, {
+		status,
+		headers: resHdrNew
+	});
 }
 
 // 解析环境变量
 async function parseEnvAdd(envadd: string): Promise<string[]> {
-    let addtext = envadd.replace(/[\t |"'\r\n]+/g, ',').replace(/,+/g, ',');
-    if (addtext.charAt(0) === ',') addtext = addtext.slice(1);
-    if (addtext.charAt(addtext.length - 1) === ',') addtext = addtext.slice(0, addtext.length - 1);
-    return addtext.split(',');
+	let addtext = envadd.replace(/[\t |"'\r\n]+/g, ',').replace(/,+/g, ',');
+	if (addtext.charAt(0) === ',') addtext = addtext.slice(1);
+	if (addtext.charAt(addtext.length - 1) === ',') addtext = addtext.slice(0, addtext.length - 1);
+	return addtext.split(',');
 }
 
 // 创建 Hono 应用
@@ -461,260 +461,260 @@ const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // CORS 中间件
 app.use('*', cors({
-    origin: '*',
-    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'TRACE', 'DELETE', 'HEAD', 'OPTIONS'],
-    maxAge: 1728000,
+	origin: '*',
+	allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'TRACE', 'DELETE', 'HEAD', 'OPTIONS'],
+	maxAge: 1728000,
 }));
 
 // 主路由处理
 app.all('*', async (c) => {
-    const request = c.req.raw;
-    const env = c.env;
+	const request = c.req.raw;
+	const env = c.env;
 
-    const getReqHeader = (key: string) => c.req.header(key);
+	const getReqHeader = (key: string) => c.req.header(key);
 
-    let url = new URL(c.req.url);
-    const userAgentHeader = c.req.header('User-Agent');
-    const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
+	let url = new URL(c.req.url);
+	const userAgentHeader = c.req.header('User-Agent');
+	const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
 
-    if (env.UA) {
-        屏蔽爬虫UA = 屏蔽爬虫UA.concat(await parseEnvAdd(env.UA));
-    }
+	if (env.UA) {
+		屏蔽爬虫UA = 屏蔽爬虫UA.concat(await parseEnvAdd(env.UA));
+	}
 
-    const workers_url = `https://${url.hostname}`;
+	const workers_url = `https://${url.hostname}`;
 
-    // 获取请求参数
-    const ns = url.searchParams.get('ns');
-    const hostname = url.searchParams.get('hubhost') || url.hostname;
-    const hostTop = hostname.split('.')[0];
+	// 获取请求参数
+	const ns = url.searchParams.get('ns');
+	const hostname = url.searchParams.get('hubhost') || url.hostname;
+	const hostTop = hostname.split('.')[0];
 
-    let checkHost: [string, boolean] | undefined;
-    let currentHubHost = hub_host;
+	let checkHost: [string, boolean] | undefined;
+	let currentHubHost = hub_host;
 
-    // 确定 hub_host
-    if (ns) {
-        if (ns === 'docker.io') {
-            currentHubHost = 'registry-1.docker.io';
-        } else {
-            currentHubHost = ns;
-        }
-    } else {
-        checkHost = routeByHosts(hostTop);
-        currentHubHost = checkHost[0];
-    }
+	// 确定 hub_host
+	if (ns) {
+		if (ns === 'docker.io') {
+			currentHubHost = 'registry-1.docker.io';
+		} else {
+			currentHubHost = ns;
+		}
+	} else {
+		checkHost = routeByHosts(hostTop);
+		currentHubHost = checkHost[0];
+	}
 
-    const fakePage = checkHost ? checkHost[1] : false;
-    console.log(`域名头部: ${hostTop} 反代地址: ${currentHubHost} searchInterface: ${fakePage}`);
+	const fakePage = checkHost ? checkHost[1] : false;
+	console.log(`域名头部: ${hostTop} 反代地址: ${currentHubHost} searchInterface: ${fakePage}`);
 
-    url.hostname = currentHubHost;
+	url.hostname = currentHubHost;
 
-    const hubParams = ['/v1/search', '/v1/repositories'];
+	const hubParams = ['/v1/search', '/v1/repositories'];
 
-    // 屏蔽爬虫
-    if (屏蔽爬虫UA.some(fxxk => userAgent.includes(fxxk)) && 屏蔽爬虫UA.length > 0) {
-        return c.html(await nginx());
-    }
+	// 屏蔽爬虫
+	if (屏蔽爬虫UA.some(fxxk => userAgent.includes(fxxk)) && 屏蔽爬虫UA.length > 0) {
+		return c.html(await nginx());
+	}
 
-    // 处理浏览器请求和 Hub API 请求
-    if ((userAgent && userAgent.includes('mozilla')) || hubParams.some(param => url.pathname.includes(param))) {
-        if (url.pathname === '/') {
-            if (env.URL302) {
-                return c.redirect(env.URL302, 302);
-            } else if (env.URL) {
-                if (env.URL.toLowerCase() === 'nginx') {
-                    return c.html(await nginx());
-                } else {
-                    return fetch(new Request(env.URL, request));
-                }
-            } else {
-                if (fakePage) {
-                    return c.html(await searchInterface());
-                }
-            }
-        } else {
-            // /v1/ 路径特殊处理
-            if (url.pathname.startsWith('/v1/')) {
-                url.hostname = 'index.docker.io';
-            } else if (fakePage) {
-                url.hostname = 'hub.docker.com';
-            }
+	// 处理浏览器请求和 Hub API 请求
+	if ((userAgent && userAgent.includes('mozilla')) || hubParams.some(param => url.pathname.includes(param))) {
+		if (url.pathname === '/') {
+			if (env.URL302) {
+				return c.redirect(env.URL302, 302);
+			} else if (env.URL) {
+				if (env.URL.toLowerCase() === 'nginx') {
+					return c.html(await nginx());
+				} else {
+					return fetch(new Request(env.URL, request));
+				}
+			} else {
+				if (fakePage) {
+					return c.html(await searchInterface());
+				}
+			}
+		} else {
+			// /v1/ 路径特殊处理
+			if (url.pathname.startsWith('/v1/')) {
+				url.hostname = 'index.docker.io';
+			} else if (fakePage) {
+				url.hostname = 'hub.docker.com';
+			}
 
-            if (url.searchParams.get('q')?.includes('library/') && url.searchParams.get('q') !== 'library/') {
-                const search = url.searchParams.get('q');
-                if (search) {
-                    url.searchParams.set('q', search.replace('library/', ''));
-                }
-            }
+			if (url.searchParams.get('q')?.includes('library/') && url.searchParams.get('q') !== 'library/') {
+				const search = url.searchParams.get('q');
+				if (search) {
+					url.searchParams.set('q', search.replace('library/', ''));
+				}
+			}
 
-            const newRequest = new Request(url, request);
-            return fetch(newRequest);
-        }
-    }
+			const newRequest = new Request(url, request);
+			return fetch(newRequest);
+		}
+	}
 
-    // 修改包含 %2F 和 %3A 的请求
-    if (!/%2F/.test(url.search) && /%3A/.test(url.toString())) {
-        let modifiedUrl = url.toString().replace(/%3A(?=.*?&)/, '%3Alibrary%2F');
-        url = new URL(modifiedUrl);
-        console.log(`handle_url: ${url}`);
-    }
+	// 修改包含 %2F 和 %3A 的请求
+	if (!/%2F/.test(url.search) && /%3A/.test(url.toString())) {
+		let modifiedUrl = url.toString().replace(/%3A(?=.*?&)/, '%3Alibrary%2F');
+		url = new URL(modifiedUrl);
+		console.log(`handle_url: ${url}`);
+	}
 
-    // 处理 token 请求
-    if (url.pathname.includes('/token')) {
-        const token_parameter: RequestInit = {
-            headers: {
-                'Host': 'auth.docker.io',
-                'User-Agent': getReqHeader("User-Agent") || '',
-                'Accept': getReqHeader("Accept") || '*/*',
-                'Accept-Language': getReqHeader("Accept-Language") || '',
-                'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
-                'Connection': 'keep-alive',
-                'Cache-Control': 'max-age=0'
-            }
-        };
-        const token_url = auth_url + url.pathname + url.search;
-        return fetch(new Request(token_url, request), token_parameter);
-    }
+	// 处理 token 请求
+	if (url.pathname.includes('/token')) {
+		const token_parameter: RequestInit = {
+			headers: {
+				'Host': 'auth.docker.io',
+				'User-Agent': getReqHeader("User-Agent") || '',
+				'Accept': getReqHeader("Accept") || '*/*',
+				'Accept-Language': getReqHeader("Accept-Language") || '',
+				'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
+				'Connection': 'keep-alive',
+				'Cache-Control': 'max-age=0'
+			}
+		};
+		const token_url = auth_url + url.pathname + url.search;
+		return fetch(new Request(token_url, request), token_parameter);
+	}
 
-    // 修改 /v2/ 请求路径
-    if (currentHubHost === 'registry-1.docker.io' && /^\/v2\/[^/]+\/[^/]+\/[^/]+$/.test(url.pathname) && !/^\/v2\/library/.test(url.pathname)) {
-        url.pathname = '/v2/library/' + url.pathname.split('/v2/')[1];
-        console.log(`modified_url: ${url.pathname}`);
-    }
+	// 修改 /v2/ 请求路径
+	if (currentHubHost === 'registry-1.docker.io' && /^\/v2\/[^/]+\/[^/]+\/[^/]+$/.test(url.pathname) && !/^\/v2\/library/.test(url.pathname)) {
+		url.pathname = '/v2/library/' + url.pathname.split('/v2/')[1];
+		console.log(`modified_url: ${url.pathname}`);
+	}
 
-    // 处理 manifests、blobs、tags 请求
-    if (
-        url.pathname.startsWith('/v2/') &&
-        (
-            url.pathname.includes('/manifests/') ||
-            url.pathname.includes('/blobs/') ||
-            url.pathname.includes('/tags/') ||
-            url.pathname.endsWith('/tags/list')
-        )
-    ) {
-        // 提取镜像名
-        let repo = '';
-        const v2Match = url.pathname.match(/^\/v2\/(.+?)(?:\/(manifests|blobs|tags)\/)/);
-        if (v2Match) {
-            repo = v2Match[1];
-        }
+	// 处理 manifests、blobs、tags 请求
+	if (
+		url.pathname.startsWith('/v2/') &&
+		(
+			url.pathname.includes('/manifests/') ||
+			url.pathname.includes('/blobs/') ||
+			url.pathname.includes('/tags/') ||
+			url.pathname.endsWith('/tags/list')
+		)
+	) {
+		// 提取镜像名
+		let repo = '';
+		const v2Match = url.pathname.match(/^\/v2\/(.+?)(?:\/(manifests|blobs|tags)\/)/);
+		if (v2Match) {
+			repo = v2Match[1];
+		}
 
-        if (repo) {
-            const tokenUrl = `${auth_url}/token?service=registry.docker.io&scope=repository:${repo}:pull`;
-            const tokenRes = await fetch(tokenUrl, {
-                headers: {
-                    'User-Agent': getReqHeader("User-Agent") || '',
-                    'Accept': getReqHeader("Accept") || '*/*',
-                    'Accept-Language': getReqHeader("Accept-Language") || '',
-                    'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
-                    'Connection': 'keep-alive',
-                    'Cache-Control': 'max-age=0'
-                }
-            });
+		if (repo) {
+			const tokenUrl = `${auth_url}/token?service=registry.docker.io&scope=repository:${repo}:pull`;
+			const tokenRes = await fetch(tokenUrl, {
+				headers: {
+					'User-Agent': getReqHeader("User-Agent") || '',
+					'Accept': getReqHeader("Accept") || '*/*',
+					'Accept-Language': getReqHeader("Accept-Language") || '',
+					'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
+					'Connection': 'keep-alive',
+					'Cache-Control': 'max-age=0'
+				}
+			});
 
-            const tokenData = await tokenRes.json() as { token?: string };
-            const token = tokenData.token;
+			const tokenData = await tokenRes.json() as { token?: string };
+			const token = tokenData.token;
 
-            const parameter: RequestInit = {
-                headers: {
-                    'Host': currentHubHost,
-                    'User-Agent': getReqHeader("User-Agent") || '',
-                    'Accept': getReqHeader("Accept") || '*/*',
-                    'Accept-Language': getReqHeader("Accept-Language") || '',
-                    'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
-                    'Connection': 'keep-alive',
-                    'Cache-Control': 'max-age=0',
-                    'Authorization': `Bearer ${token}`
-                }
-            };
+			const parameter: RequestInit = {
+				headers: {
+					'Host': currentHubHost,
+					'User-Agent': getReqHeader("User-Agent") || '',
+					'Accept': getReqHeader("Accept") || '*/*',
+					'Accept-Language': getReqHeader("Accept-Language") || '',
+					'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
+					'Connection': 'keep-alive',
+					'Cache-Control': 'max-age=0',
+					'Authorization': `Bearer ${token}`
+				}
+			};
 
-            if (c.req.header("X-Amz-Content-Sha256")) {
-                (parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
-            }
+			if (c.req.header("X-Amz-Content-Sha256")) {
+				(parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
+			}
 
-            const original_response = await fetch(new Request(url, request), parameter);
-            const original_response_clone = original_response.clone();
-            const original_text = original_response_clone.body;
-            const response_headers = original_response.headers;
-            const new_response_headers = new Headers(response_headers);
-            const status = original_response.status;
+			const original_response = await fetch(new Request(url, request), parameter);
+			const original_response_clone = original_response.clone();
+			const original_text = original_response_clone.body;
+			const response_headers = original_response.headers;
+			const new_response_headers = new Headers(response_headers);
+			const status = original_response.status;
 
-            if (new_response_headers.get("Www-Authenticate")) {
-                const auth = new_response_headers.get("Www-Authenticate");
-                if (auth) {
-                    const re = new RegExp(auth_url, 'g');
-                    new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
-                }
-            }
+			if (new_response_headers.get("Www-Authenticate")) {
+				const auth = new_response_headers.get("Www-Authenticate");
+				if (auth) {
+					const re = new RegExp(auth_url, 'g');
+					new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
+				}
+			}
 
-            if (new_response_headers.get("Location")) {
-                const location = new_response_headers.get("Location");
-                if (location) {
-                    console.info(`Found redirection location, redirecting to ${location}`);
-                    return httpHandler(request, location, currentHubHost);
-                }
-            }
+			if (new_response_headers.get("Location")) {
+				const location = new_response_headers.get("Location");
+				if (location) {
+					console.info(`Found redirection location, redirecting to ${location}`);
+					return httpHandler(request, location, currentHubHost);
+				}
+			}
 
-            return new Response(original_text, {
-                status,
-                headers: new_response_headers
-            });
-        }
-    }
+			return new Response(original_text, {
+				status,
+				headers: new_response_headers
+			});
+		}
+	}
 
-    // 构造请求参数
-    const parameter: RequestInit = {
-        headers: {
-            'Host': currentHubHost,
-            'User-Agent': getReqHeader("User-Agent") || '',
-            'Accept': getReqHeader("Accept") || '*/*',
-            'Accept-Language': getReqHeader("Accept-Language") || '',
-            'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'max-age=0'
-        }
-    };
+	// 构造请求参数
+	const parameter: RequestInit = {
+		headers: {
+			'Host': currentHubHost,
+			'User-Agent': getReqHeader("User-Agent") || '',
+			'Accept': getReqHeader("Accept") || '*/*',
+			'Accept-Language': getReqHeader("Accept-Language") || '',
+			'Accept-Encoding': getReqHeader("Accept-Encoding") || '',
+			'Connection': 'keep-alive',
+			'Cache-Control': 'max-age=0'
+		}
+	};
 
-    // 添加 Authorization 头
-    if (c.req.header("Authorization")) {
-        (parameter.headers as Record<string, string>).Authorization = getReqHeader("Authorization") || '';
-    }
+	// 添加 Authorization 头
+	if (c.req.header("Authorization")) {
+		(parameter.headers as Record<string, string>).Authorization = getReqHeader("Authorization") || '';
+	}
 
-    // 添加 X-Amz-Content-Sha256
-    if (c.req.header("X-Amz-Content-Sha256")) {
-        (parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
-    }
+	// 添加 X-Amz-Content-Sha256
+	if (c.req.header("X-Amz-Content-Sha256")) {
+		(parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
+	}
 
-    // 发起请求并处理响应
-    const original_response = await fetch(new Request(url, request), parameter);
-    const original_response_clone = original_response.clone();
-    const original_text = original_response_clone.body;
-    const response_headers = original_response.headers;
-    const new_response_headers = new Headers(response_headers);
-    const status = original_response.status;
+	// 发起请求并处理响应
+	const original_response = await fetch(new Request(url, request), parameter);
+	const original_response_clone = original_response.clone();
+	const original_text = original_response_clone.body;
+	const response_headers = original_response.headers;
+	const new_response_headers = new Headers(response_headers);
+	const status = original_response.status;
 
-    // 修改 Www-Authenticate 头
-    if (new_response_headers.get("Www-Authenticate")) {
-        const auth = new_response_headers.get("Www-Authenticate");
-        if (auth) {
-            const re = new RegExp(auth_url, 'g');
-            new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
-        }
-    }
+	// 修改 Www-Authenticate 头
+	if (new_response_headers.get("Www-Authenticate")) {
+		const auth = new_response_headers.get("Www-Authenticate");
+		if (auth) {
+			const re = new RegExp(auth_url, 'g');
+			new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
+		}
+	}
 
-    // 处理重定向
-    if (new_response_headers.get("Location")) {
-        const location = new_response_headers.get("Location");
-        if (location) {
-            console.info(`Found redirection location, redirecting to ${location}`);
-            return httpHandler(request, location, currentHubHost);
-        }
-    }
+	// 处理重定向
+	if (new_response_headers.get("Location")) {
+		const location = new_response_headers.get("Location");
+		if (location) {
+			console.info(`Found redirection location, redirecting to ${location}`);
+			return httpHandler(request, location, currentHubHost);
+		}
+	}
 
-    // 返回修改后的响应
-    return new Response(original_text, {
-        status,
-        headers: new_response_headers
-    });
+	// 返回修改后的响应
+	return new Response(original_text, {
+		status,
+		headers: new_response_headers
+	});
 });
 
 export default app;

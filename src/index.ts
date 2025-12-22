@@ -470,27 +470,27 @@ app.use('*', cors({
 app.all('*', async (c) => {
 	const request = c.req.raw;
 	const env = c.env;
-	
+
 	const getReqHeader = (key: string) => c.req.header(key);
-	
+
 	let url = new URL(c.req.url);
 	const userAgentHeader = c.req.header('User-Agent');
 	const userAgent = userAgentHeader ? userAgentHeader.toLowerCase() : "null";
-	
+
 	if (env.UA) {
 		屏蔽爬虫UA = 屏蔽爬虫UA.concat(await parseEnvAdd(env.UA));
 	}
-	
+
 	const workers_url = `https://${url.hostname}`;
-	
+
 	// 获取请求参数
 	const ns = url.searchParams.get('ns');
 	const hostname = url.searchParams.get('hubhost') || url.hostname;
 	const hostTop = hostname.split('.')[0];
-	
+
 	let checkHost: [string, boolean] | undefined;
 	let currentHubHost = hub_host;
-	
+
 	// 确定 hub_host
 	if (ns) {
 		if (ns === 'docker.io') {
@@ -502,19 +502,19 @@ app.all('*', async (c) => {
 		checkHost = routeByHosts(hostTop);
 		currentHubHost = checkHost[0];
 	}
-	
+
 	const fakePage = checkHost ? checkHost[1] : false;
 	console.log(`域名头部: ${hostTop} 反代地址: ${currentHubHost} searchInterface: ${fakePage}`);
-	
+
 	url.hostname = currentHubHost;
-	
+
 	const hubParams = ['/v1/search', '/v1/repositories'];
-	
+
 	// 屏蔽爬虫
 	if (屏蔽爬虫UA.some(fxxk => userAgent.includes(fxxk)) && 屏蔽爬虫UA.length > 0) {
 		return c.html(await nginx());
 	}
-	
+
 	// 处理浏览器请求和 Hub API 请求
 	if ((userAgent && userAgent.includes('mozilla')) || hubParams.some(param => url.pathname.includes(param))) {
 		if (url.pathname === '/') {
@@ -538,26 +538,26 @@ app.all('*', async (c) => {
 			} else if (fakePage) {
 				url.hostname = 'hub.docker.com';
 			}
-			
+
 			if (url.searchParams.get('q')?.includes('library/') && url.searchParams.get('q') !== 'library/') {
 				const search = url.searchParams.get('q');
 				if (search) {
 					url.searchParams.set('q', search.replace('library/', ''));
 				}
 			}
-			
+
 			const newRequest = new Request(url, request);
 			return fetch(newRequest);
 		}
 	}
-	
+
 	// 修改包含 %2F 和 %3A 的请求
 	if (!/%2F/.test(url.search) && /%3A/.test(url.toString())) {
 		let modifiedUrl = url.toString().replace(/%3A(?=.*?&)/, '%3Alibrary%2F');
 		url = new URL(modifiedUrl);
 		console.log(`handle_url: ${url}`);
 	}
-	
+
 	// 处理 token 请求
 	if (url.pathname.includes('/token')) {
 		const token_parameter: RequestInit = {
@@ -574,13 +574,13 @@ app.all('*', async (c) => {
 		const token_url = auth_url + url.pathname + url.search;
 		return fetch(new Request(token_url, request), token_parameter);
 	}
-	
+
 	// 修改 /v2/ 请求路径
 	if (currentHubHost === 'registry-1.docker.io' && /^\/v2\/[^/]+\/[^/]+\/[^/]+$/.test(url.pathname) && !/^\/v2\/library/.test(url.pathname)) {
 		url.pathname = '/v2/library/' + url.pathname.split('/v2/')[1];
 		console.log(`modified_url: ${url.pathname}`);
 	}
-	
+
 	// 处理 manifests、blobs、tags 请求
 	if (
 		url.pathname.startsWith('/v2/') &&
@@ -597,7 +597,7 @@ app.all('*', async (c) => {
 		if (v2Match) {
 			repo = v2Match[1];
 		}
-		
+
 		if (repo) {
 			const tokenUrl = `${auth_url}/token?service=registry.docker.io&scope=repository:${repo}:pull`;
 			const tokenRes = await fetch(tokenUrl, {
@@ -610,10 +610,10 @@ app.all('*', async (c) => {
 					'Cache-Control': 'max-age=0'
 				}
 			});
-			
+
 			const tokenData = await tokenRes.json() as { token?: string };
 			const token = tokenData.token;
-			
+
 			const parameter: RequestInit = {
 				headers: {
 					'Host': currentHubHost,
@@ -626,18 +626,18 @@ app.all('*', async (c) => {
 					'Authorization': `Bearer ${token}`
 				}
 			};
-			
+
 			if (c.req.header("X-Amz-Content-Sha256")) {
 				(parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
 			}
-			
+
 			const original_response = await fetch(new Request(url, request), parameter);
 			const original_response_clone = original_response.clone();
 			const original_text = original_response_clone.body;
 			const response_headers = original_response.headers;
 			const new_response_headers = new Headers(response_headers);
 			const status = original_response.status;
-			
+
 			if (new_response_headers.get("Www-Authenticate")) {
 				const auth = new_response_headers.get("Www-Authenticate");
 				if (auth) {
@@ -645,7 +645,7 @@ app.all('*', async (c) => {
 					new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
 				}
 			}
-			
+
 			if (new_response_headers.get("Location")) {
 				const location = new_response_headers.get("Location");
 				if (location) {
@@ -653,14 +653,14 @@ app.all('*', async (c) => {
 					return httpHandler(request, location, currentHubHost);
 				}
 			}
-			
+
 			return new Response(original_text, {
 				status,
 				headers: new_response_headers
 			});
 		}
 	}
-	
+
 	// 构造请求参数
 	const parameter: RequestInit = {
 		headers: {
@@ -673,17 +673,17 @@ app.all('*', async (c) => {
 			'Cache-Control': 'max-age=0'
 		}
 	};
-	
+
 	// 添加 Authorization 头
 	if (c.req.header("Authorization")) {
 		(parameter.headers as Record<string, string>).Authorization = getReqHeader("Authorization") || '';
 	}
-	
+
 	// 添加 X-Amz-Content-Sha256
 	if (c.req.header("X-Amz-Content-Sha256")) {
 		(parameter.headers as Record<string, string>)['X-Amz-Content-Sha256'] = getReqHeader("X-Amz-Content-Sha256") || '';
 	}
-	
+
 	// 发起请求并处理响应
 	const original_response = await fetch(new Request(url, request), parameter);
 	const original_response_clone = original_response.clone();
@@ -691,7 +691,7 @@ app.all('*', async (c) => {
 	const response_headers = original_response.headers;
 	const new_response_headers = new Headers(response_headers);
 	const status = original_response.status;
-	
+
 	// 修改 Www-Authenticate 头
 	if (new_response_headers.get("Www-Authenticate")) {
 		const auth = new_response_headers.get("Www-Authenticate");
@@ -700,7 +700,7 @@ app.all('*', async (c) => {
 			new_response_headers.set("Www-Authenticate", auth.replace(re, workers_url));
 		}
 	}
-	
+
 	// 处理重定向
 	if (new_response_headers.get("Location")) {
 		const location = new_response_headers.get("Location");
@@ -709,7 +709,7 @@ app.all('*', async (c) => {
 			return httpHandler(request, location, currentHubHost);
 		}
 	}
-	
+
 	// 返回修改后的响应
 	return new Response(original_text, {
 		status,
