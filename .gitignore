@@ -38,3 +38,5 @@ lerna-debug.log*
 !.edgeone/project.json
 .tef_dist/*
   
+.idea
+package-lock.json
