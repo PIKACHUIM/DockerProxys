@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "build": "wrangler build",
     "deploy": "wrangler deploy --minify",
     "dev-eo": "edgeone pages dev",
     "build-eo": "edgeone pages build",

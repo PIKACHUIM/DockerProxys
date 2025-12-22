@@ -7,8 +7,5 @@
      "nodejs_compat"
    ],
    "vars": {
-     "DOMAIN": "<YOUR-DOMAIN>",
-     "PROXYS": "https://registry-1.docker.io",
-     "LOGINS": "https://auth.docker.io"
    }
 }
