@@ -14,6 +14,7 @@
     "edgeone": "^1.1.13"
   },
   "devDependencies": {
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.4.0",
+    "@types/node": "^24.10.1"
   }
 }
